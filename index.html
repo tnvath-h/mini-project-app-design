@@ -1932,11 +1932,23 @@
           return;
         }
         if (!String(editId).startsWith('guest-')) {
-          const { error } = await supabase
+          let { error } = await supabase
             .from('tasks')
             .update({ title, description, due_date, repeat, priority, category })
             .eq('id', editId);
-          if (error) showToast("Error saving edit: " + error.message);
+          // If cloud table lacks new columns, save base fields so edit is not lost
+          if (error && error.message.toLowerCase().includes('schema cache')) {
+            const retry = await supabase
+              .from('tasks')
+              .update({ title, description, due_date })
+              .eq('id', editId);
+            error = retry.error;
+            if (!error) showToast("Saved title/date only - add repeat/priority/category columns in Supabase SQL.");
+          }
+          if (error) {
+            showToast("Error saving edit: " + error.message);
+            fetchTasks();
+          }
           else { showToast('Task updated.'); fetchTasks(); }
         }
         return;
@@ -1998,12 +2010,12 @@
           data[0].repeat = repeat;
           data[0].priority = priority;
           data[0].category = category;
-          showToast("Saved without repeat/priority/category - add those columns in Supabase SQL.");
+          showToast("Saved without repeat/priority/category - run Supabase SQL to add all 3 columns or they reset on reload.");
         }
       }
 
       if (error) {
-        showToast("Error adding task: " + error.message);
+        showToast("Error adding task: " + error.message + " - run Supabase SQL: ALTER TABLE tasks ADD COLUMN IF NOT EXISTS repeat text default 'one-time'; ADD COLUMN IF NOT EXISTS priority text default 'medium'; ADD COLUMN IF NOT EXISTS category text default 'other';");
       } else {
         taskForm.reset();
         closeTaskModal();
