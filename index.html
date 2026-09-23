@@ -690,8 +690,15 @@
 
         <!-- New Calendar Activity Section -->
         <div class="card">
-          <h3 id="calendar-heading">Activity Calendar (<span id="calendar-month-label"></span>)</h3>
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Hover over a day, or tab to it with the keyboard, to see your task schedule and activity.</p>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <h3 id="calendar-heading" style="margin: 0;">Activity Calendar (<span id="calendar-month-label"></span>)</h3>
+            <div style="display: flex; gap: 0.35rem;">
+              <button type="button" id="cal-prev" class="btn-secondary btn-small" aria-label="Previous month">‹</button>
+              <button type="button" id="cal-today" class="btn-secondary btn-small">Today</button>
+              <button type="button" id="cal-next" class="btn-secondary btn-small" aria-label="Next month">›</button>
+            </div>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Hover over a day to see your task schedule and activity.</p>
           <div id="stats-calendar" class="calendar-grid" role="group" aria-labelledby="calendar-heading"></div>
         </div>
       </div>
@@ -764,6 +771,10 @@
     let tasks = [];
     let currentFilter = 'all'; // all, pending, completed - simple filter for class demo
     let currentSort = localStorage.getItem('task_sort') || 'priority'; // priority, due, newest
+    // Calendar month being viewed (default = current month)
+    const _now = new Date();
+    let calYear = _now.getFullYear();
+    let calMonth = _now.getMonth(); // 0-11
 
     // Views & Wrappers
     const authView = document.getElementById('auth-view');
@@ -1154,14 +1165,13 @@
       return localStorage.getItem('reminder_off') !== 'true';
     }
 
-    // Draw this month calendar and mark days with tasks
+    // Draw viewed month calendar and mark days with tasks
     function renderCalendar() {
       calendarEl.innerHTML = '';
       const fragment = document.createDocumentFragment();
 
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth(); // 0-11
+      const year = calYear;
+      const month = calMonth; // 0-11
       
       // Setup Month Label
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -1229,6 +1239,24 @@
 
       calendarEl.appendChild(fragment);
     }
+
+    // Month navigation: prev / next / back to today
+    document.getElementById('cal-prev').addEventListener('click', () => {
+      calMonth--;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      renderCalendar();
+    });
+    document.getElementById('cal-next').addEventListener('click', () => {
+      calMonth++;
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      renderCalendar();
+    });
+    document.getElementById('cal-today').addEventListener('click', () => {
+      const now = new Date();
+      calYear = now.getFullYear();
+      calMonth = now.getMonth();
+      renderCalendar();
+    });
 
     // Auto-reset Daily tasks each new local day so habits reappear
     async function resetDailyIfNewDay() {
@@ -1307,7 +1335,7 @@
       // newest = keep fetch order (newest first), no sort needed
       
       if (shown.length === 0) {
-        taskListEl.innerHTML = `<li style="text-align: center; color: var(--text-muted);">No tasks here. Try another filter or add one below! 🏃</li>`;
+        taskListEl.innerHTML = `<li style="text-align: center; color: var(--text-muted);">No tasks here right now.</li>`;
         return;
       }
 
