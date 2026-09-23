@@ -380,6 +380,48 @@
       border-color: #055160;
       color: #6edff6;
     }
+    /* Distinguish due vs created: blue due, green created, split both */
+    .calendar-day.has-due {
+      background-color: #cfe2ff;
+      border-color: #9ec5fe;
+      color: #084298;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    body.dark-mode .calendar-day.has-due {
+      background-color: #032830;
+      border-color: #055160;
+      color: #6edff6;
+    }
+    .calendar-day.has-created {
+      background-color: #d1e7dd;
+      border-color: #a3cfbb;
+      color: #0f5132;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    body.dark-mode .calendar-day.has-created {
+      background-color: #0f3125;
+      border-color: #1d5c44;
+      color: #a7f3d0;
+    }
+    .calendar-day.has-both {
+      background: linear-gradient(135deg, #cfe2ff 50%, #d1e7dd 50%);
+      border-color: #9ec5fe;
+      color: #084298;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    body.dark-mode .calendar-day.has-both {
+      background: linear-gradient(135deg, #032830 50%, #0f3125 50%);
+      border-color: #055160;
+      color: #6edff6;
+    }
+    .calendar-legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.6rem; }
+    .legend-dot { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 0.3rem; vertical-align: baseline; }
+    .legend-due { background: #cfe2ff; border: 1px solid #9ec5fe; }
+    .legend-created { background: #d1e7dd; border: 1px solid #a3cfbb; }
+    .legend-both { background: linear-gradient(135deg, #cfe2ff 50%, #d1e7dd 50%); border: 1px solid #9ec5fe; }
     
     /* Calendar Tooltip */
     .calendar-day .tooltip {
@@ -865,6 +907,11 @@
           </div>
           <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Hover over a day to see your task schedule and activity. Click a highlighted day for details.</p>
           <div id="stats-calendar" class="calendar-grid" role="group" aria-labelledby="calendar-heading"></div>
+          <div class="calendar-legend" aria-hidden="true">
+            <span><span class="legend-dot legend-due"></span>Due</span>
+            <span><span class="legend-dot legend-created"></span>Created</span>
+            <span><span class="legend-dot legend-both"></span>Both</span>
+          </div>
           <div id="day-detail" class="card hidden" style="margin-top: 1rem; margin-bottom: 0;" aria-live="polite">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
               <h4 id="day-detail-title" style="margin: 0;">Tasks</h4>
@@ -1535,6 +1582,10 @@
         
         if (tasksCreatedToday.length > 0 || tasksDueToday.length > 0) {
           dateCell.classList.add('has-activity');
+          // Blue due, green created, split both
+          if (tasksDueToday.length > 0 && tasksCreatedToday.length > 0) dateCell.classList.add('has-both');
+          else if (tasksDueToday.length > 0) dateCell.classList.add('has-due');
+          else dateCell.classList.add('has-created');
 
           // Clickable for detail panel + keyboard accessible
           const tooltipId = `calendar-tooltip-${dateStr}`;
@@ -1651,11 +1702,16 @@
       renderCalendar();
     });
 
-    // Auto-reset Daily tasks each new local day so habits reappear (single batched query)
+    // Auto-reset Daily tasks each new local day until due date (single batched query)
+    // No due date = forever. Due >= today = still active. Due < today = stop, stay Done/overdue.
     async function resetDailyIfNewDay() {
       const today = getLocalDateStr();
       if (localStorage.getItem('last_daily_reset') === today) return;
-      const done = tasks.filter(t => (t.repeat || 'one-time') === 'daily' && t.is_completed);
+      const done = tasks.filter(t => {
+        if ((t.repeat || 'one-time') !== 'daily' || !t.is_completed) return false;
+        if (!t.due_date) return true;
+        return t.due_date >= today;
+      });
       if (done.length > 0) {
         done.forEach(t => { t.is_completed = false; });
         if (isGuest) {
