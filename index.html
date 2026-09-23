@@ -5,33 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="To-Do List - a simple task app with productivity statistics and an activity calendar.">
   <title>To-Do List</title>
-  <!-- Empty data-URI favicon avoids a wasted network request for /favicon.ico -->
-  <link rel="icon" href="data:,">
+  <!-- Checkmark favicon: blue rounded square + white tick, inline SVG so single file -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Cpath d='M20 33l9 9 15-18' fill='none' stroke='white' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Cpath d='M20 33l9 9 15-18' fill='none' stroke='white' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* --- CSS Variables & Theming --- */
     :root {
-      --bg-color: #F8F9FA;
-      --text-color: #212529;
+      color-scheme: light;
+      --bg-color: #F5F7FB;
+      --text-color: #1a2233;
       /* Muted gray for small text - still easy to read on white */
-      --text-muted: #495057;
+      --text-muted: #5b6478;
       --card-bg: #FFFFFF;
-      --border-color: #DEE2E6;
-      --primary-color: #0d6efd;
-      --primary-hover: #0b5ed7;
+      --border-color: rgba(26, 34, 51, 0.12);
+      --primary-color: #2563eb;
+      --primary-hover: #1d4ed8;
       --danger-color: #dc3545;
       --success-color: #198754;
-      --shadow: 0 4px 6px rgba(0,0,0,0.1);
-      --border-radius: 8px;
+      --shadow: 0 8px 24px rgba(37, 99, 235, 0.08), 0 2px 6px rgba(0,0,0,0.06);
+      --border-radius: 12px;
     }
 
     body.dark-mode {
-      --bg-color: #212529;
-      --text-color: #F9FAFB;
+      color-scheme: dark;
+      --bg-color: #0f1420;
+      --text-color: #eef2ff;
       /* Light gray for small text in dark mode */
-      --text-muted: #CED4DA;
-      --card-bg: #343A40;
-      --border-color: #495057;
-      --shadow: 0 4px 6px rgba(0,0,0,0.5);
+      --text-muted: #aab3c9;
+      --card-bg: rgba(30, 38, 58, 0.92);
+      --border-color: rgba(255, 255, 255, 0.12);
+      --shadow: 0 8px 24px rgba(0,0,0,0.45);
     }
 
     /* --- Base Styles --- */
@@ -39,7 +45,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     body {
@@ -122,6 +128,50 @@
       transform: scale(1.1);
     }
 
+    /* Floating Add button bottom-left (theme is bottom-right) */
+    .fab-add {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      font-size: 1.8rem;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      z-index: 1000;
+      padding: 0;
+      margin: 0;
+    }
+    .fab-add:hover { background: var(--primary-hover); }
+
+    /* Modal popup for Add / Edit */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1100;
+      padding: 1rem;
+    }
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
     /* --- Card Styles --- */
     .card {
       background: var(--card-bg);
@@ -134,7 +184,20 @@
 
     h1, h2, h3 {
       margin-bottom: 1rem;
+      letter-spacing: 0.01em;
     }
+    h1 { font-size: 1.9rem; font-weight: 800; }
+    h2 { font-size: 1.4rem; font-weight: 700; }
+    h3 { font-size: 1.1rem; font-weight: 700; }
+
+    button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, summary:focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+
+    .task-meta.overdue { color: var(--danger-color); font-weight: 700; }
+    .task-meta.due-today { color: #b7791f; font-weight: 700; }
+    body.dark-mode .task-meta.due-today { color: #ffda6a; }
 
     /* --- Forms & Inputs --- */
     .form-group {
@@ -445,6 +508,32 @@
     .task-item.priority-medium { border-left: 4px solid #ffc107; }
     .task-item.priority-low { border-left: 4px solid #198754; }
 
+    /* Category badges - 3 fixed colors */
+    .badge-school { background: #e0e7ff; border-color: #c7d2fe; color: #3730a3; }
+    .badge-personal { background: #fce7f3; border-color: #fbcfe8; color: #9d174d; }
+    .badge-other { background: #f1f5f9; border-color: #e2e8f0; color: #475569; }
+
+    /* Subtle motion */
+    .task-item { animation: fadeSlide 0.25s ease; }
+    @keyframes fadeSlide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    main > div { animation: viewFade 0.2s ease; }
+    @keyframes viewFade { from { opacity: 0; } to { opacity: 1; } }
+    .modal-card { animation: popIn 0.18s ease; }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+
+    /* Desktop header Add button, FAB only on mobile */
+    #btn-add-header { display: none; width: auto; margin: 0; padding: 0.5rem 1rem; }
+    @media (min-width: 768px) {
+      #btn-add-header { display: inline-block; }
+      .fab-add { display: none; }
+    }
+    @media (max-width: 767px) {
+      .fab-add { display: block; }
+    }
+
     /* Filter buttons */
     .filter-bar {
       display: flex;
@@ -507,6 +596,36 @@
     .reminder-banner strong { display: block; margin-bottom: 0.25rem; }
     .reminder-banner button { width: auto; margin: 0.5rem 0.5rem 0 0; padding: 0.4rem 0.9rem; font-size: 0.85rem; }
 
+    /* Delete Undo toast bottom center */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #212529;
+      color: #fff;
+      border-radius: 24px;
+      padding: 0.7rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      font-size: 0.9rem;
+      max-width: 92%;
+    }
+    .toast.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+    .toast button {
+      width: auto;
+      margin: 0;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.85rem;
+      background: var(--primary-color);
+    }
+
     /* --- Settings Options --- */
     .setting-row {
       display: flex;
@@ -538,11 +657,28 @@
     <span aria-hidden="true">🌙</span>
   </button>
 
+  <!-- Floating Add Task button bottom-left -->
+  <button id="fab-add" class="fab-add" aria-label="Add new task">+</button>
+
+  <!-- Delete Undo toast -->
+  <div id="delete-toast" class="toast" role="status" aria-live="polite">
+    <span>Task deleted.</span>
+    <button type="button" id="btn-undo-delete">Undo</button>
+  </div>
+
+  <!-- Generic app toast -->
+  <div id="app-toast" class="toast" role="status" aria-live="polite" style="bottom: 4.5rem;">
+    <span id="app-toast-msg"></span>
+  </div>
+
   <div class="container">
     
     <!-- AUTH VIEW -->
     <div id="auth-view" class="card">
-      <h1>To-Do List</h1>
+      <h1 style="display: flex; align-items: center; justify-content: center; gap: 0.6rem;">
+        <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#2563eb"/><path d="M20 33l9 9 15-18" fill="none" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        To-Do List
+      </h1>
       <p style="margin-bottom: 1.5rem;">Manage your tasks and track your productivity.</p>
       
       <div id="auth-error-msg" class="auth-error hidden" role="alert" aria-live="assertive"></div>
@@ -589,62 +725,87 @@
       <div id="dashboard-view">
         <div id="reminder-banner" class="reminder-banner hidden" role="alert"></div>
         <div class="card">
-          <h3>Your Tasks</h3>
-          <div class="filter-bar" role="group" aria-label="Filter tasks">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+            <h3 style="margin: 0;">Your Tasks</h3>
+            <button type="button" id="btn-add-header" class="btn-secondary btn-small">+ Add Task</button>
+          </div>
+          <div class="filter-bar" role="group" aria-label="Filter tasks" style="margin-top: 0.75rem;">
             <button type="button" class="filter-btn active" data-filter="all">All</button>
             <button type="button" class="filter-btn" data-filter="pending">Pending</button>
             <button type="button" class="filter-btn" data-filter="completed">Done</button>
           </div>
-          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
             <label for="task-sort" class="input-label" style="margin: 0;">Sort by:</label>
             <select id="task-sort" style="width: auto; margin: 0; padding: 0.4rem 0.6rem; font-size: 0.85rem;">
               <option value="priority">Priority</option>
               <option value="due">Due Date</option>
               <option value="newest">Newest</option>
             </select>
+            <select id="task-filter-cat" aria-label="Filter by category" style="width: auto; margin: 0; padding: 0.4rem 0.6rem; font-size: 0.85rem;">
+              <option value="all">All categories</option>
+              <option value="school">School</option>
+              <option value="personal">Personal</option>
+              <option value="other">Other</option>
+            </select>
+            <input type="search" id="task-search" placeholder="Search tasks..." aria-label="Search tasks" style="flex: 1; min-width: 140px; margin: 0; padding: 0.4rem 0.6rem; font-size: 0.85rem;">
           </div>
+          <p id="task-count" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;"></p>
           <div id="loading-tasks" style="text-align: center; margin-bottom: 1rem;">Loading tasks...</div>
           <ul id="task-list" class="task-list"></ul>
         </div>
 
-        <details class="card" id="add-task-card">
-          <summary style="cursor: pointer; font-weight: bold; font-size: 1.05rem;">Add New Task +</summary>
-          <form id="task-form" style="margin-top: 1rem;">
-            <div class="form-group">
-              <label for="task-title" class="input-label">Task Title</label>
-              <input type="text" id="task-title" placeholder="e.g., Complete project report" required>
-            </div>
-            
-            <div class="form-group">
-              <label for="task-desc" class="input-label">Task Description</label>
-              <textarea id="task-desc" placeholder="Add additional details or notes..." rows="2"></textarea>
-            </div>
+        <div id="task-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <div class="modal-card">
+            <h3 id="modal-title">Add New Task</h3>
+            <form id="task-form">
+              <div class="form-group">
+                <label for="task-title" class="input-label">Task Title</label>
+                <input type="text" id="task-title" placeholder="e.g., Complete project report" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="task-desc" class="input-label">Task Description</label>
+                <textarea id="task-desc" placeholder="Add additional details or notes..." rows="2"></textarea>
+              </div>
 
-            <div class="form-group">
-              <label for="task-date" class="input-label">Due Date (Optional)</label>
-              <input type="date" id="task-date">
-            </div>
+              <div class="form-group">
+                <label for="task-date" class="input-label">Due Date (Optional) - tap to pick</label>
+                <input type="date" id="task-date" style="cursor: pointer; min-height: 44px;">
+              </div>
 
-            <div class="form-group">
-              <label for="task-repeat" class="input-label">Repeat</label>
-              <select id="task-repeat">
-                <option value="one-time">One-time</option>
-                <option value="daily">Daily</option>
-              </select>
-            </div>
+              <div class="form-group">
+                <label for="task-repeat" class="input-label">Repeat</label>
+                <select id="task-repeat">
+                  <option value="one-time">One-time</option>
+                  <option value="daily">Daily</option>
+                </select>
+              </div>
 
-            <div class="form-group">
-              <label for="task-priority" class="input-label">Priority</label>
-              <select id="task-priority">
-                <option value="low">Low</option>
-                <option value="medium" selected>Medium</option>
-                <option value="high">High</option>
-              </select>
-            </div>
+              <div class="form-group">
+                <label for="task-priority" class="input-label">Priority</label>
+                <select id="task-priority">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
 
-            <button type="submit" style="margin-top: 0.5rem;">Add Task</button>
-          </form>
-        </details>
+              <div class="form-group">
+                <label for="task-category" class="input-label">Category</label>
+                <select id="task-category">
+                  <option value="other" selected>Other</option>
+                  <option value="school">School</option>
+                  <option value="personal">Personal</option>
+                </select>
+              </div>
+
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                <button type="submit" id="task-submit-btn" style="margin: 0;">Add Task</button>
+                <button type="button" id="task-cancel-btn" class="btn-secondary" style="margin: 0;">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
 
       <!-- VIEW 2: STATISTICS PAGE -->
@@ -677,6 +838,10 @@
               <div class="stat-label">Daily Done</div>
             </div>
             <div class="stat-box">
+              <div id="stat-streak" class="stat-value">0</div>
+              <div class="stat-label">Daily Streak</div>
+            </div>
+            <div class="stat-box">
               <div id="stat-logins" class="stat-value">0</div>
               <div class="stat-label">Total Logins</div>
             </div>
@@ -698,8 +863,15 @@
               <button type="button" id="cal-next" class="btn-secondary btn-small" aria-label="Next month">›</button>
             </div>
           </div>
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Hover over a day to see your task schedule and activity.</p>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Hover over a day to see your task schedule and activity. Click a highlighted day for details.</p>
           <div id="stats-calendar" class="calendar-grid" role="group" aria-labelledby="calendar-heading"></div>
+          <div id="day-detail" class="card hidden" style="margin-top: 1rem; margin-bottom: 0;" aria-live="polite">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+              <h4 id="day-detail-title" style="margin: 0;">Tasks</h4>
+              <button type="button" id="day-detail-close" class="btn-secondary btn-small" style="width: auto;">Close</button>
+            </div>
+            <ul id="day-detail-list" style="list-style: none; margin-top: 0.75rem; display: grid; gap: 0.5rem;"></ul>
+          </div>
         </div>
       </div>
 
@@ -729,6 +901,18 @@
               <p>Show Due Today / Overdue banner.</p>
             </div>
             <button id="settings-reminder-toggle" class="btn-secondary btn-small" style="width: auto;">Turn Off</button>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>Backup Guest Tasks</h4>
+              <p>Export offline tasks as JSON or import a backup file.</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button id="btn-export-guest" class="btn-secondary btn-small" style="width: auto;" type="button">Export</button>
+              <button id="btn-import-guest" class="btn-secondary btn-small" style="width: auto;" type="button">Import</button>
+              <input type="file" id="import-guest-file" accept="application/json,.json" class="hidden">
+            </div>
           </div>
 
           <div class="setting-row">
@@ -771,10 +955,13 @@
     let tasks = [];
     let currentFilter = 'all'; // all, pending, completed - simple filter for class demo
     let currentSort = localStorage.getItem('task_sort') || 'priority'; // priority, due, newest
+    let currentSearch = '';
+    let editingId = null; // null = adding, id = editing
     // Calendar month being viewed (default = current month)
     const _now = new Date();
     let calYear = _now.getFullYear();
     let calMonth = _now.getMonth(); // 0-11
+    let selectedDay = null; // YYYY-MM-DD tapped in calendar
 
     // Views & Wrappers
     const authView = document.getElementById('auth-view');
@@ -803,9 +990,100 @@
     const taskDateInput = document.getElementById('task-date');
     const taskRepeatInput = document.getElementById('task-repeat');
     const taskPriorityInput = document.getElementById('task-priority');
+    const taskCategoryInput = document.getElementById('task-category');
+    const taskFilterCat = document.getElementById('task-filter-cat');
     const taskListEl = document.getElementById('task-list');
     const loadingTasksEl = document.getElementById('loading-tasks');
     const filterButtons = document.querySelectorAll('.filter-btn');
+    let currentCat = 'all';
+
+    // Unified non-blocking toast (replaces alert)
+    let appToastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById('app-toast');
+      document.getElementById('app-toast-msg').textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(appToastTimer);
+      appToastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Human dates: Today, Tomorrow, Overdue X days
+    function relDate(due) {
+      if (!due) return '';
+      const today = getLocalDateStr();
+      if (due === today) return 'Today';
+      const d1 = new Date(today + 'T00:00:00');
+      const d2 = new Date(due + 'T00:00:00');
+      const diff = Math.round((d2 - d1) / 86400000);
+      if (diff === 1) return 'Tomorrow';
+      if (diff === -1) return 'Yesterday';
+      if (diff < -1) return `Overdue by ${-diff} days`;
+      return `In ${diff} days`;
+    }
+    function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+    const taskModal = document.getElementById('task-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const taskSubmitBtn = document.getElementById('task-submit-btn');
+    const taskCancelBtn = document.getElementById('task-cancel-btn');
+    const fabAdd = document.getElementById('fab-add');
+
+    // Open popup for Add or Edit (same form)
+    let lastModalOpener = null;
+    function openTaskModal(mode, task = null) {
+      lastModalOpener = document.activeElement;
+      if (mode === 'edit' && task) {
+        editingId = task.id;
+        modalTitle.textContent = 'Edit Task';
+        taskSubmitBtn.textContent = 'Save';
+        taskTitleInput.value = task.title || '';
+        taskDescInput.value = task.description || '';
+        taskDateInput.value = task.due_date || '';
+        taskRepeatInput.value = task.repeat || 'one-time';
+        taskPriorityInput.value = task.priority || 'medium';
+        taskCategoryInput.value = (task.category === 'code' ? 'other' : (task.category || 'other'));
+      } else {
+        editingId = null;
+        modalTitle.textContent = 'Add New Task';
+        taskSubmitBtn.textContent = 'Add Task';
+        taskForm.reset();
+        taskRepeatInput.value = 'one-time';
+        taskPriorityInput.value = 'medium';
+        taskCategoryInput.value = 'other';
+      }
+      taskModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      taskTitleInput.focus();
+    }
+    function closeTaskModal() {
+      taskModal.classList.add('hidden');
+      document.body.style.overflow = '';
+      editingId = null;
+      if (lastModalOpener && lastModalOpener.focus) lastModalOpener.focus();
+    }
+    // Focus trap: keep Tab inside modal
+    taskModal.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab') return;
+      const focusable = taskModal.querySelectorAll('input, select, textarea, button');
+      const visible = [...focusable].filter(el => !el.disabled);
+      if (visible.length === 0) return;
+      const first = visible[0];
+      const last = visible[visible.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+    fabAdd.addEventListener('click', () => openTaskModal('add'));
+    document.getElementById('btn-add-header').addEventListener('click', () => openTaskModal('add'));
+    // Tap anywhere on due-date field opens native calendar
+    taskDateInput.addEventListener('click', () => {
+      try { if (taskDateInput.showPicker) taskDateInput.showPicker(); } catch {}
+    });
+    taskCancelBtn.addEventListener('click', closeTaskModal);
+    taskModal.addEventListener('click', (e) => {
+      if (e.target === taskModal) closeTaskModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !taskModal.classList.contains('hidden')) closeTaskModal();
+    });
 
     // Stats Elements
     const statTotal = document.getElementById('stat-total');
@@ -971,7 +1249,7 @@
 
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!supabase) return alert("Setup Supabase credentials first!");
+      if (!supabase) return showToast("Setup Supabase credentials first!");
       
       const email = emailInput.value.trim();
       const password = passwordInput.value;
@@ -1001,7 +1279,7 @@
     });
 
     btnSignup.addEventListener('click', async () => {
-      if (!supabase) return alert("Setup Supabase credentials first!");
+      if (!supabase) return showToast("Setup Supabase credentials first!");
       
       const email = emailInput.value.trim();
       const password = passwordInput.value;
@@ -1028,9 +1306,9 @@
         authErrorMsg.classList.add('hidden');
         handleUserLogin(data.user);
         authForm.reset();
-        alert(`Account "${email}" created! You are now logged in.`);
+        showToast(`Account "${email}" created! You are now logged in.`);
       } else {
-        alert(`Account "${email}" created! Please check your inbox to confirm, then click Log In.`);
+        showToast(`Account "${email}" created! Check inbox to confirm, then Log In.`);
       }
     });
 
@@ -1046,7 +1324,7 @@
         return;
       }
       
-      if (!supabase) return alert("Setup Supabase credentials first!");
+      if (!supabase) return showToast("Setup Supabase credentials first!");
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.href,
@@ -1055,7 +1333,7 @@
       if (error) {
         showError(error.message);
       } else {
-        alert("If an account exists, recovery instructions have been processed.");
+        showToast("If an account exists, recovery email was sent.");
       }
     });
 
@@ -1078,8 +1356,39 @@
           renderTasks();
           updateTaskStats();
         }
-        alert("Guest task data cleared!");
+        showToast("Guest task data cleared!");
       }
+    });
+
+    // Backup: export/import guest tasks as JSON
+    document.getElementById('btn-export-guest').addEventListener('click', () => {
+      const data = localStorage.getItem('guest_tasks') || '[]';
+      const blob = new Blob([data], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'guest-tasks-backup.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast('Guest backup exported.');
+    });
+    document.getElementById('btn-import-guest').addEventListener('click', () => {
+      document.getElementById('import-guest-file').click();
+    });
+    document.getElementById('import-guest-file').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const arr = JSON.parse(reader.result);
+          if (!Array.isArray(arr)) throw new Error('not array');
+          localStorage.setItem('guest_tasks', JSON.stringify(arr));
+          if (isGuest) { tasks = arr; renderTasks(); updateTaskStats(); }
+          showToast(`Imported ${arr.length} guest tasks.`);
+        } catch { showToast('Import failed: invalid JSON backup.'); }
+        e.target.value = '';
+      };
+      reader.readAsText(file);
     });
 
     // Reminder on/off saved in Local Storage
@@ -1099,7 +1408,7 @@
     function getLocalDateStr(d = new Date()) {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
-    // Calculate totals, percent, today due, and daily done
+    // Calculate totals, percent, today due, daily done + streak
     function updateTaskStats() {
       const total = tasks.length;
       const completed = tasks.filter(t => t.is_completed).length;
@@ -1111,12 +1420,25 @@
       const dueToday = tasks.filter(t => t.due_date === todayStr).length;
       const dailyDone = tasks.filter(t => (t.repeat || 'one-time') === 'daily' && t.is_completed).length;
 
+      // Streak: consecutive days up to today with a Daily task completed
+      // Best-effort from created_at dates + current Daily Done
+      let streak = 0;
+      if (dailyDone > 0) {
+        streak = 1;
+        const days = new Set(tasks.filter(t => t.is_completed && t.created_at).map(t => String(t.created_at).slice(0, 10)));
+        let d = new Date();
+        d.setDate(d.getDate() - 1);
+        while (days.has(getLocalDateStr(d))) { streak++; d.setDate(d.getDate() - 1); }
+      }
+
       statTotal.textContent = total;
       statCompleted.textContent = completed;
       statPending.textContent = pending;
       statPercent.textContent = `${percent}%`;
       statToday.textContent = dueToday;
       statDailyDone.textContent = dailyDone;
+      const streakEl = document.getElementById('stat-streak');
+      if (streakEl) streakEl.textContent = streak;
       progressFill.style.width = `${percent}%`;
       progressText.textContent = `${percent}% complete`;
       
@@ -1214,10 +1536,14 @@
         if (tasksCreatedToday.length > 0 || tasksDueToday.length > 0) {
           dateCell.classList.add('has-activity');
 
-          // Make day focusable so keyboard users can read the tooltip
+          // Clickable for detail panel + keyboard accessible
           const tooltipId = `calendar-tooltip-${dateStr}`;
           dateCell.tabIndex = 0;
+          dateCell.setAttribute('role', 'button');
+          dateCell.setAttribute('data-date', dateStr);
           dateCell.setAttribute('aria-describedby', tooltipId);
+          dateCell.setAttribute('aria-expanded', selectedDay === dateStr ? 'true' : 'false');
+          dateCell.style.cursor = 'pointer';
 
           // Build Tooltip
           const tooltip = document.createElement('div');
@@ -1238,27 +1564,94 @@
       }
 
       calendarEl.appendChild(fragment);
+      // Re-show detail if month still contains selected day
+      if (selectedDay) {
+        const [sy, sm] = selectedDay.split('-').map(Number);
+        if (sy === year && sm === month + 1) showDayDetail(selectedDay, false);
+        else hideDayDetail();
+      }
     }
+
+    function hideDayDetail() {
+      selectedDay = null;
+      document.getElementById('day-detail').classList.add('hidden');
+    }
+
+    function showDayDetail(dateStr, scroll = true) {
+      selectedDay = dateStr;
+      const due = tasks.filter(t => t.due_date === dateStr);
+      const created = tasks.filter(t => t.created_at && t.created_at.startsWith(dateStr) && t.due_date !== dateStr);
+      const list = [...due, ...created].slice(0, 20);
+
+      document.getElementById('day-detail-title').textContent = `Tasks on ${dateStr} (${relDate(dateStr) || dateStr})`;
+      const ul = document.getElementById('day-detail-list');
+      ul.innerHTML = '';
+      if (list.length === 0) {
+        ul.innerHTML = `<li style="color: var(--text-muted);">No tasks on this day.</li>`;
+      } else {
+        const frag = document.createDocumentFragment();
+        list.forEach(t => {
+          const li = document.createElement('li');
+          li.style.cssText = 'background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.6rem 0.75rem; font-size: 0.85rem;';
+          const status = t.is_completed ? '✅ Done' : '• Pending';
+          const badges = `${cap(t.priority || 'medium')} • ${cap((t.category === 'code' ? 'other' : t.category) || 'other')} • ${(t.repeat || 'one-time') === 'daily' ? 'Daily' : 'Once'}`;
+          li.textContent = `${status} — ${t.title || '(no title)'} (${badges})`;
+          frag.appendChild(li);
+        });
+        ul.appendChild(frag);
+      }
+      // Update expanded state on cells
+      calendarEl.querySelectorAll('.calendar-day[data-date]').forEach(c => {
+        c.setAttribute('aria-expanded', c.getAttribute('data-date') === dateStr ? 'true' : 'false');
+      });
+      document.getElementById('day-detail').classList.remove('hidden');
+      if (scroll) document.getElementById('day-detail').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
+    calendarEl.addEventListener('click', (e) => {
+      const cell = e.target.closest('.calendar-day[data-date]');
+      if (!cell) return;
+      const d = cell.getAttribute('data-date');
+      if (selectedDay === d) hideDayDetail();
+      else showDayDetail(d);
+      // Refresh expanded attrs without full rerender
+      calendarEl.querySelectorAll('.calendar-day[data-date]').forEach(c => {
+        c.setAttribute('aria-expanded', c.getAttribute('data-date') === selectedDay ? 'true' : 'false');
+      });
+    });
+    calendarEl.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const cell = e.target.closest('.calendar-day[data-date]');
+      if (!cell) return;
+      e.preventDefault();
+      const d = cell.getAttribute('data-date');
+      if (selectedDay === d) hideDayDetail();
+      else showDayDetail(d);
+    });
+    document.getElementById('day-detail-close').addEventListener('click', hideDayDetail);
 
     // Month navigation: prev / next / back to today
     document.getElementById('cal-prev').addEventListener('click', () => {
       calMonth--;
       if (calMonth < 0) { calMonth = 11; calYear--; }
+      hideDayDetail();
       renderCalendar();
     });
     document.getElementById('cal-next').addEventListener('click', () => {
       calMonth++;
       if (calMonth > 11) { calMonth = 0; calYear++; }
+      hideDayDetail();
       renderCalendar();
     });
     document.getElementById('cal-today').addEventListener('click', () => {
       const now = new Date();
       calYear = now.getFullYear();
       calMonth = now.getMonth();
+      hideDayDetail();
       renderCalendar();
     });
 
-    // Auto-reset Daily tasks each new local day so habits reappear
+    // Auto-reset Daily tasks each new local day so habits reappear (single batched query)
     async function resetDailyIfNewDay() {
       const today = getLocalDateStr();
       if (localStorage.getItem('last_daily_reset') === today) return;
@@ -1267,10 +1660,11 @@
         done.forEach(t => { t.is_completed = false; });
         if (isGuest) {
           localStorage.setItem('guest_tasks', JSON.stringify(tasks));
-        } else if (supabase) {
-          for (const t of done) {
-            if (String(t.id).startsWith('guest-')) continue;
-            await supabase.from('tasks').update({ is_completed: false }).eq('id', t.id);
+        } else if (supabase && currentUser) {
+          const ids = done.map(t => t.id).filter(id => !String(id).startsWith('guest-'));
+          if (ids.length > 0) {
+            const { error } = await supabase.from('tasks').update({ is_completed: false }).in('id', ids).eq('user_id', currentUser.id);
+            if (error) console.error('Batch reset failed:', error);
           }
         }
       }
@@ -1308,13 +1702,16 @@
       updateTaskStats();
     }
 
-    // Show tasks with simple All / Pending / Done filter + sort mode
+    // Show tasks with filter + search + sort + category
     function renderTasks() {
       taskListEl.innerHTML = '';
 
+      const q = (currentSearch || '').toLowerCase();
       let shown = [...tasks];
       if (currentFilter === 'pending') shown = shown.filter(t => !t.is_completed);
       if (currentFilter === 'completed') shown = shown.filter(t => t.is_completed);
+      if (currentCat && currentCat !== 'all') shown = shown.filter(t => ((t.category === 'code' ? 'other' : t.category) || 'other') === currentCat);
+      if (q) shown = shown.filter(t => `${t.title || ''} ${t.description || ''} ${t.category || ''}`.toLowerCase().includes(q));
 
       // Sort: Done always at bottom, then by mode
       const weight = { high: 3, medium: 2, low: 1 };
@@ -1333,30 +1730,42 @@
         });
       }
       // newest = keep fetch order (newest first), no sort needed
+
+      const countEl = document.getElementById('task-count');
+      if (countEl) countEl.textContent = `Showing ${shown.length} of ${tasks.length} tasks`;
       
       if (shown.length === 0) {
-        taskListEl.innerHTML = `<li style="text-align: center; color: var(--text-muted);">No tasks here right now.</li>`;
+        const emptyMsg = tasks.length === 0
+          ? `<div style="font-size:2rem;">🌱</div><div style="font-weight:700;margin:0.4rem 0;">A fresh start</div><div>Add your first task with + and it will show up here.</div>`
+          : `<div style="font-size:2rem;">🔭</div><div>No tasks here right now.</div><div style="font-size:0.8rem;">Try another filter, search, or category.</div>`;
+        taskListEl.innerHTML = `<li style="text-align: center; color: var(--text-muted); padding: 1.5rem 1rem; line-height:1.5;">${emptyMsg}</li>`;
         return;
       }
 
       const fragment = document.createDocumentFragment();
+      const iconCheck = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+      const iconEdit = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>';
+      const iconTrash = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>';
 
       shown.forEach(task => {
         const li = document.createElement('li');
         const priority = task.priority || 'medium';
         const repeat = task.repeat || 'one-time';
+        const cat = (task.category === 'code' ? 'other' : task.category) || 'other';
         li.className = `task-item priority-${priority} ${task.is_completed ? 'completed' : ''}`;
         const safeTitle = escapeHTML(task.title);
+        const dueLabel = task.due_date ? relDate(task.due_date) : '';
 
         li.innerHTML = `
           <div class="task-content">
             <div class="task-title">${safeTitle}</div>
             <div style="margin: 0.35rem 0;">
               ${repeat === 'daily' ? `<span class="badge badge-daily">🔁 Daily</span>` : `<span class="badge">Once</span>`}
-              <span class="badge badge-${priority}">${priority.charAt(0).toUpperCase() + priority.slice(1)}</span>
+              <span class="badge badge-${priority}">${cap(priority)}</span>
+              <span class="badge badge-${cat}">${cap(cat)}</span>
             </div>
             ${task.description ? `<div class="task-desc">${escapeHTML(task.description)}</div>` : ''}
-            ${task.due_date ? `<div class="task-meta">Due: ${task.due_date}</div>` : ''}
+            ${task.due_date ? `<div class="task-meta ${!task.is_completed && task.due_date < getLocalDateStr() ? 'overdue' : (!task.is_completed && task.due_date === getLocalDateStr() ? 'due-today' : '')}" title="${task.due_date}">${dueLabel ? `${dueLabel} • ${task.due_date}` : task.due_date}${!task.is_completed && task.due_date < getLocalDateStr() ? ' • Overdue' : (!task.is_completed && task.due_date === getLocalDateStr() ? ' • Today' : '')}</div>` : ''}
           </div>
           <div class="task-actions">
             <button
@@ -1366,14 +1775,20 @@
               data-completed="${task.is_completed}"
               aria-label="Mark '${safeTitle}' as ${task.is_completed ? 'not done' : 'done'}"
             >
-              ${task.is_completed ? 'Undo' : 'Done'}
+              ${iconCheck} ${task.is_completed ? 'Undo' : 'Done'}
             </button>
+            <button
+              class="btn-secondary btn-small"
+              data-action="edit"
+              data-id="${task.id}"
+              aria-label="Edit task '${safeTitle}'"
+            >${iconEdit} Edit</button>
             <button
               class="btn-danger btn-small"
               data-action="delete"
               data-id="${task.id}"
               aria-label="Delete task '${safeTitle}'"
-            >Delete</button>
+            >${iconTrash} Delete</button>
           </div>
         `;
         fragment.appendChild(li);
@@ -1382,7 +1797,7 @@
       taskListEl.appendChild(fragment);
     }
 
-    // One click handler for all Done/Delete buttons
+    // One click handler for Done/Edit/Delete buttons
     taskListEl.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-action]');
       if (!btn) return;
@@ -1392,6 +1807,9 @@
         window.toggleTask(id, btn.dataset.completed === 'true');
       } else if (action === 'delete') {
         window.deleteTask(id);
+      } else if (action === 'edit') {
+        const task = tasks.find(t => String(t.id) === String(id));
+        if (task) openTaskModal('edit', task);
       }
     });
 
@@ -1413,6 +1831,19 @@
       renderTasks();
     });
 
+    // Search filters title + description
+    document.getElementById('task-search').addEventListener('input', (e) => {
+      currentSearch = e.target.value.trim();
+      renderTasks();
+    });
+
+    // Category filter
+    taskFilterCat.value = currentCat;
+    taskFilterCat.addEventListener('change', () => {
+      currentCat = taskFilterCat.value;
+      renderTasks();
+    });
+
     taskForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -1421,10 +1852,37 @@
       const due_date = taskDateInput.value || null;
       const repeat = taskRepeatInput.value;
       const priority = taskPriorityInput.value;
+      const category = taskCategoryInput.value || 'other';
 
       if (!title) {
-        alert("Please enter a task title.");
+        showToast("Please enter a task title.");
         taskTitleInput.focus();
+        return;
+      }
+
+      // Edit existing task (same popup)
+      if (editingId) {
+        const idx = tasks.findIndex(t => String(t.id) === String(editingId));
+        if (idx > -1) {
+          tasks[idx] = { ...tasks[idx], title, description, due_date, repeat, priority, category };
+          renderTasks();
+          updateTaskStats();
+        }
+        const editId = editingId;
+        closeTaskModal();
+        if (isGuest) {
+          localStorage.setItem('guest_tasks', JSON.stringify(tasks));
+          showToast('Task updated.');
+          return;
+        }
+        if (!String(editId).startsWith('guest-')) {
+          const { error } = await supabase
+            .from('tasks')
+            .update({ title, description, due_date, repeat, priority, category })
+            .eq('id', editId);
+          if (error) showToast("Error saving edit: " + error.message);
+          else { showToast('Task updated.'); fetchTasks(); }
+        }
         return;
       }
 
@@ -1436,14 +1894,17 @@
           due_date,
           repeat,
           priority,
+          category,
           is_completed: false,
           created_at: new Date().toISOString()
         };
         tasks.unshift(newTask);
         localStorage.setItem('guest_tasks', JSON.stringify(tasks));
         taskForm.reset();
+        closeTaskModal();
         renderTasks();
         updateTaskStats();
+        showToast('Task added.');
         return;
       }
 
@@ -1456,12 +1917,13 @@
           due_date,
           repeat,
           priority,
+          category,
           is_completed: false,
           created_at: new Date().toISOString()
         }])
         .select();
 
-      // Fallback if Supabase table lacks repeat/priority columns yet
+      // Fallback if Supabase table lacks new columns yet
       if (error && error.message.toLowerCase().includes('schema cache')) {
         const retry = await supabase
           .from('tasks')
@@ -1479,17 +1941,20 @@
         if (!error && data && data[0]) {
           data[0].repeat = repeat;
           data[0].priority = priority;
-          alert("Saved without repeat/priority - add those columns in Supabase SQL to enable them on cloud.");
+          data[0].category = category;
+          showToast("Saved without repeat/priority/category - add those columns in Supabase SQL.");
         }
       }
 
       if (error) {
-        alert("Error adding task: " + error.message + "\n\nIf it mentions repeat/priority, run in Supabase SQL:\nALTER TABLE tasks ADD COLUMN IF NOT EXISTS repeat text default 'one-time';\nALTER TABLE tasks ADD COLUMN IF NOT EXISTS priority text default 'medium';");
+        showToast("Error adding task: " + error.message);
       } else {
         taskForm.reset();
+        closeTaskModal();
         tasks.unshift(data[0]);
         renderTasks();
         updateTaskStats();
+        showToast('Task added.');
       }
     });
 
@@ -1522,17 +1987,20 @@
     };
 
     window.deleteTask = async (id) => {
-      if(!confirm("Are you sure you want to delete this task?")) return;
+      const idx = tasks.findIndex(t => String(t.id) === String(id));
+      if (idx === -1) return;
+      const deleted = tasks[idx];
+      const atIndex = idx;
 
-      const originalTasks = [...tasks];
-      tasks = tasks.filter(t => t.id != id);
+      // Remove now, offer Undo
+      tasks = tasks.filter(t => String(t.id) !== String(id));
       renderTasks();
       updateTaskStats();
+      if (isGuest) localStorage.setItem('guest_tasks', JSON.stringify(tasks));
 
-      if (isGuest) {
-        localStorage.setItem('guest_tasks', JSON.stringify(tasks));
-        return;
-      }
+      showDeleteToast(deleted, atIndex);
+
+      if (isGuest) return;
 
       const { error } = await supabase
         .from('tasks')
@@ -1541,11 +2009,53 @@
 
       if (error) {
         console.error("Error deleting task:", error);
-        tasks = originalTasks;
+        // Put it back if cloud failed
+        tasks.splice(Math.min(atIndex, tasks.length), 0, deleted);
         renderTasks();
         updateTaskStats();
+        showToast("Delete failed: " + error.message);
       }
     };
+
+    // Undo bar for 6 seconds after delete
+    let lastDeleted = null;
+    let toastTimer = null;
+    function showDeleteToast(deletedTask, atIndex) {
+      lastDeleted = { task: deletedTask, index: atIndex };
+      const toast = document.getElementById('delete-toast');
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 6000);
+    }
+    document.getElementById('btn-undo-delete').addEventListener('click', async () => {
+      if (!lastDeleted) return;
+      const { task, index } = lastDeleted;
+      lastDeleted = null;
+      document.getElementById('delete-toast').classList.remove('show');
+      clearTimeout(toastTimer);
+
+      tasks.splice(Math.min(index, tasks.length), 0, task);
+      renderTasks();
+      updateTaskStats();
+      if (isGuest) {
+        localStorage.setItem('guest_tasks', JSON.stringify(tasks));
+        return;
+      }
+      // Re-insert on cloud (new id), then refresh to get real id
+      const payload = {
+        user_id: currentUser.id,
+        title: task.title,
+        description: task.description,
+        due_date: task.due_date,
+        repeat: task.repeat || 'one-time',
+        priority: task.priority || 'medium',
+        is_completed: task.is_completed || false,
+        created_at: task.created_at || new Date().toISOString()
+      };
+      const { error } = await supabase.from('tasks').insert([payload]);
+      if (error) showToast("Undo failed: " + error.message);
+      else fetchTasks();
+    });
 
     function escapeHTML(str) {
       if (!str) return '';
